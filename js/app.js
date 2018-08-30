@@ -5,14 +5,13 @@ var Enemy = function(x,y, speed) {
 
     //Init properties of enemy x,y and sprite
     this.x = x;
-    this.y = y + 83/1.5;
+    this.y = y + 83/2;
     this.speed = speed;
     // The image/sprite for our enemies, this uses
     // a helper we've provided to easily load images
     this.sprite = 'images/enemy-bug.png';
-    this.width = 101;
-    this.limit = this.width * 5;
-    this.reset = -this.width;
+    this.stepX = 101;
+    this.limit = this.stepX * 5;
 };
 
 // Update the enemy's position, required method for game
@@ -21,14 +20,13 @@ Enemy.prototype.update = function(dt) {
     // You should multiply any movement by the dt parameter
     // which will ensure the game runs at the same speed for
     // all computers.
-
-    //If enemy not passed canvas boundary
-    if (this.x < this.limit) {
-      //Move
-      this.x += 200 * dt;
-    } else {
+    this.x += this.speed * dt;
+    //If enemy passed canvas boundary
+    if (this.x > this.limit) {
       //Reset to start
-      this.x = this.reset;
+      this.x = -this.stepX;
+      //Change to random speed
+      this.speed = 100 + Math.floor(Math.random() * 512);
     }
 };
 
@@ -46,10 +44,10 @@ class Player {
   constructor() {
     //Init properties of player x,y and sprite
     this.sprite = 'images/char-boy.png';
-    this.width = 101;
-    this.height = 83;
-    this.startX = this.width * 2;
-    this.startY = (this.height * 5) - (this.height/3);
+    this.stepX = 101;
+    this.stepY = 83;
+    this.startX = this.stepX * 2;
+    this.startY = (this.stepY * 4) + (this.stepY/2);
     this.x = this.startX;
     this.y = this.startY;
   }
@@ -64,36 +62,46 @@ class Player {
     switch (input) {
       case 'left':
         if (this.x > 0) {
-          this.x -= this.width;
+          this.x -= this.stepX;
         }
         break;
       case 'right':
-        if (this.x < this.width * 4) {
-          this.x += this.width;
+        if (this.x < this.stepX * 4) {
+          this.x += this.stepX;
         }
         break;
       case 'up':
         if (this.y > 0) {
-          this.y -= this.height;
+          this.y -= this.stepY;
         }
         break;
       case 'down':
-        if (this.y < this.height * 4) {
-          this.y += this.height;
+        if (this.y < this.stepY * 4) {
+          this.y += this.stepY;
         }
         break;
     }
   }
-    //Methods
-      //Update position
-        //Check collision
-        //Check win?
-      //Render
-        //Draw sprite new position
-      //Handle keyboard input
-        //Update player x and y according to input
-      //Reset player
-        //Set x and y to starting point
+
+  //Check collision and win
+  update() {
+    //Check collision
+    for(let enemy of allEnemies) {
+      if (this.y === enemy.y && (enemy.x + enemy.stepX/2 > this.x && enemy.x < this.x + this.stepX/2)) {
+        this.reset();
+      }
+    }
+    //Check win player reach the water
+    if (this.y === -this.stepY/2) {
+      this.reset();
+    }
+  }
+
+  //Reset after collision or win
+  reset() {
+    this.x = this.startX;
+    this.y = this.startY;
+  }
 }
 
 
@@ -104,12 +112,14 @@ class Player {
 //New Player object
 const player = new Player();
 //Init allEnemies array
-const enemy1 = new Enemy(-101, 0, 200);
-const enemy2 = new Enemy(-101*3, 83, 300);
-const enemy3 = new Enemy(-101*2, 83*2, 300);
-//For each enemy create and push Enemy object into array
 const allEnemies = [];
-allEnemies.push(enemy1, enemy2, enemy3);
+const enemyPosition = [0, 83, 166];
+let enemy;
+//For each enemy create and push Enemy object into array
+enemyPosition.forEach(function(posY) {
+  enemy = new Enemy(-101, posY, 100 + Math.floor(Math.random() * 512));
+  allEnemies.push(enemy);
+});
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.
